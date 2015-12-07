@@ -6,8 +6,11 @@ EXEC=mi_kernel
 
 all: $(EXEC)
 
-mi_kernel: mi_kernel.o
+mi_kernel: mi_kernel.o mi_swap.o
 	$(CC) -o $@ $^ $(CFLAGS) $(CLIB)
+
+%.o : %.c
+	$(CC) -o $@ -c $< $(CFLAGS) $(CLIB)
 
 .PHONY: clean realclean test
 

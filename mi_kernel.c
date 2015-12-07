@@ -4,8 +4,10 @@
 #include "mi_syscall.h"
 #include "include/hardware.h"
 #include "hw_config.h"
+#include "mi_swap.h"
 
 static int current_process;
+static unsigned int mapped_vpage;
 
 struct tlb_entry_s {
   unsigned int rfu:8;
@@ -33,18 +35,42 @@ static int ppage_of_vaddr(int p,unsigned int vaddr) {
   return (page < N/2) ? p * (N/2) + page + 1 : -1;
 }
 
+// static void mmuhandler() {
+//   union tlb_entry_u u;
+//   struct tlb_entry_s e;
+//   unsigned int vaddr = _in(MMU_FAULT_ADDR);
+//   int ppage = ppage_of_vaddr(current_process, vaddr);
+//   if (ppage < 0) exit(EXIT_FAILURE);
+//   e.ppage = ppage;
+//   e.vpage = vpage_of_vaddr(vaddr);
+//   e.access_r = 1;
+//   e.access_w = 1;
+//   e.access_x = 1;
+//   e.util = 1;
+//   u.entry = e;
+//   _out(TLB_ADD_ENTRY,u.asInt);
+// }
+
 static void mmuhandler() {
-  union tlb_entry_u u;
   struct tlb_entry_s e;
-  unsigned int vaddr = _in(MMU_FAULT_ADDR);
-  int ppage = ppage_of_vaddr(current_process, vaddr);
-  if (ppage < 0) exit(EXIT_FAILURE);
-  e.ppage = ppage;
-  e.vpage = vpage_of_vaddr(vaddr);
-  e.access_r = 1;
-  e.access_w = 1;
-  e.access_x = 1;
-  e.util = 1;
+  union tlb_entry_u u;
+  if (kernel_mode) {
+    fprintf(stderr, "kernel panic"); 
+    exit(-1);
+  }
+  unsigned int vaddr=_in(MMU_FAULT_ADDR);
+  if((vaddr < (int) virtual_memory) || ((vaddr) >= (int) virtual_memory + VM_SIZE)) {
+    fprintf(stderr, "seg fault");
+    exit(-1);
+  }
+  store_to_swap(mapped_vpage,1);
+  e.vpage= mapped_vpage;
+  e.ppage = 1;
+  u.entry = e;
+  _out(TLB_DEL_ENTRY, u.asInt);
+  fetch_from_swap(vpage_of_vaddr(vaddr),1);
+  e.vpage = mapped_vpage;
+  e.access_r= e.access_w = e.access_x = 1;
   u.entry = e;
   _out(TLB_ADD_ENTRY,u.asInt);
 }
