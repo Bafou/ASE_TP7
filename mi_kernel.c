@@ -54,10 +54,10 @@ static int ppage_of_vaddr(int p,unsigned int vaddr) {
 static void mmuhandler() {
   struct tlb_entry_s e;
   union tlb_entry_u u;
-  if (kernel_mode) {
-    fprintf(stderr, "kernel panic"); 
-    exit(-1);
-  }
+ // if (kernel_mode) {
+ // fprintf(stderr, "kernel panic"); 
+ //   exit(-1);
+ // }
   unsigned int vaddr=_in(MMU_FAULT_ADDR);
   if((vaddr < (int) virtual_memory) || ((vaddr) >= (int) virtual_memory + VM_SIZE)) {
     fprintf(stderr, "seg fault");

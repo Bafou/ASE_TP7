@@ -4,6 +4,7 @@
 #include "mi_syscall.h"
 #include "include/hardware.h"
 #include "hw_config.h"
+#include "mi_swap.h"
 
 
 
@@ -13,17 +14,17 @@
 }
 
  int store_to_swap (int vpage, int ppage) {
-	if ((fseek(swap_file, (vpage<<12)), SEEK_SET) == -1)
+	if (fseek(swap_file, (vpage<<12), SEEK_SET) == -1)
 		return -1;
-	if ((fwrite ((ppage<<12)+ physical_mem, 1, PAGE_SIZE, swap_file)) == -1 ) 
+	if ((fwrite ((ppage<<12)+ physical_memory, 1, PAGE_SIZE, swap_file)) == -1 ) 
 		return -1;
 	return 0;
 }
 
- int fetch_from__swap (int vpage, int ppage) {
-	if ((fseek(swap_file, (vpage<<12)), SEEK_SET) == -1)
+ int fetch_from_swap (int vpage, int ppage) {
+	if (fseek(swap_file, (vpage<<12), SEEK_SET) == -1)
 		return -1;
-	if ((fread ((ppage<<12)+ physical_mem, 1, PAGE_SIZE, swap_file)) == -1 ) 
+	if ((fread ((ppage<<12)+ physical_memory, 1, PAGE_SIZE, swap_file)) == -1 ) 
 		return -1;
 	return 0;
 }
